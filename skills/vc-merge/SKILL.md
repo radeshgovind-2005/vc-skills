@@ -5,21 +5,23 @@ description: Squash-merge an approved pull request, clean up, and confirm the re
 
 # vc-merge
 
-Merging is a release here: semantic-release runs on every push to the default branch. That makes this a level-3 action. Ask every time, even if an earlier plan was accepted.
+Merging is a release here: semantic-release runs on every push to the default branch. That makes this a level-3 action. Ask every time, even if an earlier plan was accepted. The exceptions: the user named the merge in this request ("merge it", "ship it") or said "autopilot". Then show the line from step 2 and run it. Autopilot never adds `--admin`, never force-pushes, never bypasses rules.
 
 ## Preconditions (check, do not assume)
 
 1. `gh pr view --json state,isDraft,mergeable,title` shows an open, non-draft, mergeable PR.
 2. `gh pr checks` shows every required check passing. If any is pending or failed, stop and report.
-3. The PR title is a valid Conventional Commit (the pr-title check should say so).
+3. `gh pr view --json headRefOid` equals `git rev-parse HEAD`, and `git status -sb` shows no `ahead`. Otherwise the checks are for an older commit: push and wait.
+4. The PR title is a valid Conventional Commit (the pr-title check should say so).
 
 ## Steps
 
 1. Work out the release: last tag from `git describe --tags --abbrev=0` (or none), the type in the title, and the bump from `vc/references/conventions.md`. With no earlier tag the first release is 1.0.0; mention it and offer a baseline tag for pre-1.0 projects.
-2. Ask, showing the exact command and the result: "Squash-merge #12 `fix(cart): stop double discount` - publishes v1.4.3 (patch). Command: `gh pr merge 12 --squash --delete-branch`. Go?" Wait for a clear yes.
+2. Ask, showing the exact command and the result: "Squash-merge #12 `fix(cart): stop double discount` - publishes v1.4.3 (patch). Command: `gh pr merge 12 --squash --delete-branch`. Go?" Wait for a clear yes (skip the wait only under the exception above).
 3. Run it. Never add `--admin` or `--auto` without being asked; never bypass branch rules.
-4. Sync: `git switch <default> && git pull --ff-only`, then delete the local branch with `git branch -d <name>` (lowercase `-d`).
-5. Confirm the release: `git fetch --tags`, then `gh run list --workflow release.yml --limit 1`. Report the new tag, or say that the title type publishes nothing (docs, chore, refactor).
+4. Sync: `git switch <default> && git pull --ff-only origin <default>` (local default may have no upstream; `git branch -u origin/<default>` fixes that once), then delete the local branch with `git branch -d <name>` (lowercase `-d`).
+5. Confirm the release: find the run with `gh run list --workflow release.yml --limit 1`; if it is `in_progress` or `queued`, `gh run watch <id> --exit-status` before reporting. Then `git fetch --tags` and report the new tag, or say that the title type publishes nothing (docs, chore, refactor).
+6. Offer cleanup of other local branches already merged into the default branch (`git branch --merged <default>`); delete only after a yes.
 
 ## If something fails
 

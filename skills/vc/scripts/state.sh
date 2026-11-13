@@ -23,6 +23,8 @@ if git rev-parse --verify -q HEAD >/dev/null 2>&1; then
   else
     echo "upstream=none"
   fi
+  # Local default branch without upstream makes a bare `git pull` print a hint; pull with `origin <default>`.
+  [ -n "$default" ] && ! git rev-parse --verify -q "$default@{u}" >/dev/null 2>&1 && echo "default_has_upstream=false"
   if [ -n "$default" ] && [ "$branch" != "$default" ] && git rev-parse --verify -q "$default" >/dev/null 2>&1; then
     echo "commits_ahead_of_default=$(git rev-list --count "$default..HEAD")"
   fi
@@ -42,12 +44,18 @@ if command -v gh >/dev/null 2>&1; then
   echo "gh=installed"
   if gh auth status >/dev/null 2>&1; then
     echo "gh_auth=true"
-    gh pr view --json number,title,state,isDraft,url,reviewDecision,statusCheckRollup \
-      --jq '"open_pr=#\(.number) \(.state) draft=\(.isDraft) \(.url)\npr_title=\(.title)\npr_checks=" + ([.statusCheckRollup[]? | (.conclusion // .status)] | group_by(.) | map("\(.[0]):\(length)") | join(","))' 2>/dev/null || echo "open_pr=none"
+    gh pr view --json number,title,state,isDraft,url,reviewDecision,statusCheckRollup,headRefOid \
+      --jq '"open_pr=#\(.number) \(.state) draft=\(.isDraft) \(.url)\npr_title=\(.title)\npr_head=\(.headRefOid)\npr_checks=" + ([.statusCheckRollup[]? | (.conclusion // .status)] | group_by(.) | map("\(.[0]):\(length)") | join(","))' 2>/dev/null || echo "open_pr=none"
   else echo "gh_auth=false"; fi
 else
   echo "gh=not_installed"
 fi
+
+if [ -n "$default" ]; then
+  merged=$(git branch --merged "$default" --format='%(refname:short)' 2>/dev/null | grep -vxF -e "$default" -e "$branch" | tr '\n' ' ')
+  [ -n "$merged" ] && echo "merged_local_branches=$merged"
+fi
+echo "head=$(git rev-parse HEAD 2>/dev/null)"
 
 echo "--- changed files (max 30)"
 git status --porcelain | head -30

@@ -13,6 +13,12 @@ Run `sh <this-skill-dir>/scripts/state.sh`. It is read-only. Also skim the diff 
 
 If `repo=false`, offer `git init` and stop. If `hooks_installed=false` or any `missing=` line appears, put "run vc-setup" in the plan; the checks and release flow depend on it.
 
+## Autopilot
+
+If the user says "autopilot", "just ship it", or "merge it without asking" (or names the merge outright, like "merge it"), skip the plan wait, the PR-text wait in vc-pr, and the merge ask in vc-merge for that request. Say what you will do in one line, then run it. Autopilot lifts the asks only. It never lifts the Never list below: no `--admin`, no force push, no push to the default branch, no skipped hooks. It also does not extend to later requests. If a precondition fails (checks red, wrong head, not mergeable), stop and report.
+
+Autopilot and releases: say up front what the title type will publish. `docs`, `chore`, `refactor`, `style`, `test`, `build`, `ci` publish nothing. Do not change the type to force a bump. If the change is user-facing and the user wants a release, ask once whether it should be `feat` or `fix`.
+
 ## Step 2 - Build the plan
 
 Pick steps from the state. Unrelated changes become separate commits (see vc-commit).
@@ -24,10 +30,13 @@ Pick steps from the state. Unrelated changes become separate commits (see vc-com
 | Feature branch, changes present | commit(s); then push + PR if no PR exists |
 | Feature branch, clean, unpushed commits | push + PR |
 | Feature branch, pushed, no PR | open PR |
+| Feature branch, PR already open | update that PR's title and body (do not create another) |
+| Feature branch, `ahead` > 0 | push first; checks on the PR describe the old head until you do |
 | PR open, checks pending | watch checks and report |
 | PR open, checks failed | show the failure; propose a fix commit |
 | PR open, checks green | propose squash-merge, with the version it will release |
 | PR merged | sync default branch, delete the local branch, report the release tag |
+| `merged_local_branches=` present | offer to delete those local branches (and their remotes) with `git branch -d`; ask first |
 | Behind default branch | rebase on origin/<default> before the PR |
 
 Mark each step with who decides: `auto` (local and reversible), `asks` (publishes or hard to undo).
@@ -65,4 +74,4 @@ Never: commit on the default branch, force push, push to the default branch, ski
 
 ## Step 5 - Monitor
 
-After a PR opens, watch it: `gh pr checks --watch --interval 30` (or poll `gh pr checks` every 30 to 60 seconds if you cannot run long commands). Report when checks finish. On failure, show the failing log lines and propose a fix; do not push fixes unasked. Never merge on your own; green checks lead to the Step 2 proposal.
+After a PR opens, watch it: `gh pr checks --watch --interval 30` (or poll `gh pr checks` every 30 to 60 seconds if you cannot run long commands). Report when checks finish. Before trusting `gh pr checks`, confirm they are for the current commit: `gh pr view --json headRefOid` must equal `git rev-parse HEAD` (state.sh prints `pr_head=` and `head=`). If not, push and wait for the new run. On failure, show the failing log lines and propose a fix; do not push fixes unasked. Never merge on your own; green checks lead to the Step 2 proposal.
