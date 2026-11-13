@@ -1,0 +1,2 @@
+LINT_CMD=""
+TEST_CMD="bash tests/run_all.sh"
