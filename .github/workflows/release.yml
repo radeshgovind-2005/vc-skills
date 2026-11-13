@@ -1,0 +1,27 @@
+name: Release
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # create the tag and the GitHub release
+      issues: write          # comment on released issues
+      pull-requests: write   # comment on released pull requests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # semantic-release reads the full history and tags
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"   # no registry-url: it conflicts with semantic-release auth
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --yes semantic-release@25
