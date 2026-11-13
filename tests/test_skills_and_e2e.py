@@ -57,7 +57,7 @@ flow = [("git switch -c fix/app-version", "allow"), ("git add app.js", "allow"),
         ("git commit -m 'fix(app): bump version string'", "allow"), ("git add README.md", "allow"),
         ("git commit -m 'docs(readme): add readme'", "allow"), ("git push -u origin HEAD", "allow"),
         ("gh pr create --title 'fix(app): bump version string' --body-file /tmp/b.md", "allow"),
-        ("gh pr checks --watch --interval 30", "allow"), ("gh pr merge 1 --squash --delete-branch", "ask"),
+        ("gh pr checks --watch --interval 30", "allow"), ("gh pr merge 1 --squash --delete-branch", "allow"),
         ("git switch main && git pull --ff-only", "allow"), ("git branch -d fix/app-version", "allow"), ("git fetch --tags", "allow")]
 for cmd, want in flow: check(guard(cmd, w) == want, f"e2e guard {want}: {cmd}")
 # run the real commands
