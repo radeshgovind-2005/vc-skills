@@ -10,7 +10,8 @@ Policy:
   DENY  hook bypasses (--no-verify, commit -n, HUSKY=0, LEFTHOOK=0, GIT_CONFIG_* injection,
         core.hooksPath changes, git aliases), force push, any push to main/master, pushing all
         branches, removing or disabling .githooks, gh pr merge --admin
-  ASK   merge, release, tag, reset --hard, clean -f, branch -D, discard-all, non-GET gh api,
+  ALLOW gh pr merge without --admin (CI and branch rules are the gate; merging is the release)
+  ASK   manual gh release create/edit/delete, tag, reset --hard, clean -f, branch -D, discard-all, non-GET gh api,
         writes to .githooks / CI workflows / agent settings (Bash or Edit/Write tools),
         eval, pipe-to-shell, dynamic command names
 
@@ -260,11 +261,15 @@ def check_segment(seg, cwd, depth=0):
     if head == "gh":
         rest = argv[1:]
         if rest[:2] == ["pr", "merge"]:
+            # A normal squash-merge is the release path. CI and branch rules gate it, so the
+            # guard only blocks the bypass. Whether to merge is the skill's call, not a prompt.
             if "--admin" in rest:
                 return "deny", "gh pr merge --admin bypasses branch rules."
-            return "ask", "Merging to main publishes a release."
+            return None, ""
         if rest[:1] == ["release"]:
-            return "ask", "Releases are published by the release workflow."
+            if rest[1:2] and rest[1] in ("list", "view", "download"):
+                return None, ""
+            return "ask", "Releases are published by the release workflow, not by hand."
         if rest[:2] == ["repo", "delete"]:
             return "deny", "Deleting a repo is not allowed from the agent."
         if rest[:1] == ["api"]:

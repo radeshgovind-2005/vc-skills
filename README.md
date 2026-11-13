@@ -36,7 +36,7 @@ Start in a new repo with: "set up the repo".
 | vc-setup | Installer. Hooks, CI, PR template, semantic-release, agent guard, GitHub rules |
 | vc-commit | Clean commits |
 | vc-pr | PR title = squash commit; body from template; watch checks |
-| vc-merge | Squash-merge, with a second ask because a merge publishes a release |
+| vc-merge | Squash-merge and confirm the release. Asks first, unless autopilot is on ("update the repo") |
 
 ## Verify
 

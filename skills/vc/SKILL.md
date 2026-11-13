@@ -1,6 +1,6 @@
 ---
 name: vc
-description: Version control for any git repo - commit, branch, PR, squash-merge, release. Use whenever the user says "version control", "vc", "commit this", "ship this", "wrap this up", "branch and PR", "clean up my git", "what should I do with these changes", or asks about uncommitted changes, a messy branch, an open PR, a merge, or a release, even if they never say git. Reads the repo, shows a numbered plan, and waits for the user to accept or comment before changing anything.
+description: Version control for any git repo - commit, branch, PR, squash-merge, release. Use whenever the user says "version control", "vc", "commit this", "ship this", "wrap this up", "branch and PR", "clean up my git", "what should I do with these changes", or asks about uncommitted changes, a messy branch, an open PR, a merge, or a release, even if they never say git. Reads the repo, shows a numbered plan, and waits for the user to accept or comment before changing anything. Under autopilot ("autopilot", "update the repo", "ship it") it runs the whole flow through merge and release without asking.
 ---
 
 # vc - version control router
@@ -15,9 +15,16 @@ If `repo=false`, offer `git init` and stop. If `hooks_installed=false` or any `m
 
 ## Autopilot
 
-If the user says "autopilot", "just ship it", or "merge it without asking" (or names the merge outright, like "merge it"), skip the plan wait, the PR-text wait in vc-pr, and the merge ask in vc-merge for that request. Say what you will do in one line, then run it. Autopilot lifts the asks only. It never lifts the Never list below: no `--admin`, no force push, no push to the default branch, no skipped hooks. It also does not extend to later requests. If a precondition fails (checks red, wrong head, not mergeable), stop and report.
+Autopilot is on when the user says "autopilot", "update the repo", "ship it", "just ship it", "release it", "merge it", or "push it". Once on, it stays on for the rest of the session.
 
-Autopilot and releases: say up front what the title type will publish. `docs`, `chore`, `refactor`, `style`, `test`, `build`, `ci` publish nothing. Do not change the type to force a bump. If the change is user-facing and the user wants a release, ask once whether it should be `feat` or `fix`.
+Under autopilot the user has handed version control to you and moved on. They will not come back to approve steps. Run the whole flow in one go, with no plan wait, no PR-text wait, and no merge ask: branch, commit, push, open PR, wait for checks (`gh pr checks --watch`), squash-merge, sync the default branch, delete the merged local branch, confirm the release. Say what you will do in one line at the start and report the result (PR, tag) in one line at the end. Do not end the turn with a question about merging or releasing.
+
+Autopilot still stops for:
+- The Never list below: no `--admin`, no force push, no push to the default branch, no skipped hooks.
+- Losing work: `reset --hard`, `clean -f`, `branch -D` on unmerged commits, dropping a stash, deleting a remote branch other than the merged PR branch, deleting a release or tag. Ask for these.
+- A failed precondition: checks red, merge conflict, PR not mergeable. Try to fix the cause in a new commit (failing test, lint, conflict) and keep going. Stop and report only when the fix is not clear.
+
+Autopilot and releases: pick the title type from what the change does, honestly. New capability is `feat`, a bug fix is `fix`, and `docs`, `chore`, `refactor`, `style`, `test`, `build`, `ci` publish nothing. Do not change the type to force a bump, and do not ask which type to use. State the version it publishes in the final report.
 
 ## Step 2 - Build the plan
 
@@ -68,10 +75,10 @@ Approval levels, because the cost of a wrong move rises with each one:
 | 0 read | status, diff, log, `gh pr view` | free |
 | 1 local, reversible | branch, commit, stash | run, then report |
 | 2 publishes | push, open PR | covered by an accepted plan; show the PR text first |
-| 3 hard to undo | merge, tag, release, delete, force-with-lease | ask again at that moment, show the exact command |
+| 3 hard to undo | merge, tag, release, delete, force-with-lease | ask again at that moment, show the exact command. Under autopilot, merge and its release run without asking; deletes of unmerged work still ask |
 
 Never: commit on the default branch, force push, push to the default branch, skip a hook (`--no-verify`, `HUSKY=0`), edit `.githooks/` or CI to make a check pass, merge with `--admin`. If a check fails, fix the cause or stop and report. The vc-guard hook enforces this, but do not rely on it; the rule is yours too.
 
 ## Step 5 - Monitor
 
-After a PR opens, watch it: `gh pr checks --watch --interval 30` (or poll `gh pr checks` every 30 to 60 seconds if you cannot run long commands). Report when checks finish. Before trusting `gh pr checks`, confirm they are for the current commit: `gh pr view --json headRefOid` must equal `git rev-parse HEAD` (state.sh prints `pr_head=` and `head=`). If not, push and wait for the new run. On failure, show the failing log lines and propose a fix; do not push fixes unasked. Never merge on your own; green checks lead to the Step 2 proposal.
+After a PR opens, watch it: `gh pr checks --watch --interval 30` (or poll `gh pr checks` every 30 to 60 seconds if you cannot run long commands). Report when checks finish. Before trusting `gh pr checks`, confirm they are for the current commit: `gh pr view --json headRefOid` must equal `git rev-parse HEAD` (state.sh prints `pr_head=` and `head=`). If not, push and wait for the new run. On failure, show the failing log lines and propose a fix; do not push fixes unasked. Without autopilot, never merge on your own; green checks lead to the Step 2 proposal. Under autopilot, fix and push, and merge when green.
