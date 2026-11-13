@@ -1,0 +1,8 @@
+{
+  "name": "vc",
+  "description": "Version control for AI agents: say \"version control\" and the agent reads the repo, shows a plan, and waits. Includes vc, vc-setup, vc-commit, vc-pr and vc-merge skills.",
+  "author": { "name": "radeshgovind-2005" },
+  "homepage": "https://github.com/radeshgovind-2005/vc-skills",
+  "repository": "https://github.com/radeshgovind-2005/vc-skills",
+  "keywords": ["git", "version-control", "conventional-commits", "semantic-release", "pull-requests"]
+}

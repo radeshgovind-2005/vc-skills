@@ -2,7 +2,16 @@
 
 Version control for AI agents. Say "version control" and the agent reads the repo, shows a plan, and waits.
 
-## Install (all your repos)
+## Install as a Claude Code plugin (all your repos)
+
+    /plugin install vc --marketplace radeshgovind-2005/vc-skills
+
+Or from a terminal:
+
+    claude plugin marketplace add radeshgovind-2005/vc-skills
+    claude plugin install vc@vc-skills
+
+## Install by copying (all your repos)
 
     cp -r skills/* ~/.claude/skills/          # Claude Code, personal skills
 
