@@ -1,0 +1,14 @@
+{
+  "name": "vc-skills",
+  "owner": { "name": "radeshgovind-2005" },
+  "metadata": { "description": "Version-control skills for AI agents." },
+  "plugins": [
+    {
+      "name": "vc",
+      "source": "./",
+      "description": "Router plus setup, commit, PR and merge skills with hooks, CI and release flow.",
+      "category": "development",
+      "keywords": ["git", "version-control", "conventional-commits"]
+    }
+  ]
+}
