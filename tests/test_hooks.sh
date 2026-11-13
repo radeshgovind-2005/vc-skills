@@ -58,7 +58,7 @@ expect_ok "lint passes" commit "chore: add z"
 
 # run-checks: missing tool skips locally, fails in CI
 echo 'LINT_CMD="nonexistent-tool-xyz --check"' > .githooks/config
-expect_ok   "missing tool skipped locally" sh .githooks/run-checks.sh lint
+expect_ok   "missing tool skipped locally" env -u CI sh .githooks/run-checks.sh lint
 expect_fail "missing tool fails in CI"     env CI=true sh .githooks/run-checks.sh lint
 expect_fail "unknown step"                 sh .githooks/run-checks.sh nope
 
