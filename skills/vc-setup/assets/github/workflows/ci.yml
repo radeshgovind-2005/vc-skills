@@ -1,0 +1,17 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+{{SETUP_STEPS}}
+      - name: Lint and test (same script as the local hooks)
+        run: sh .githooks/run-checks.sh all
+        env:
+          CI: "true"
