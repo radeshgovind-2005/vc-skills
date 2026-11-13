@@ -23,9 +23,20 @@ run() {
   sh -c "$cmd" || { echo "run-checks: $label failed" >&2; return 1; }
 }
 
+# Repo-specific gates: every executable *.sh in .githooks/checks.d/ runs, in name order.
+# Use it for content checks (README rules, link checks) so hooks and CI share them.
+extra() {
+  [ -d "$here/checks.d" ] || return 0
+  for f in "$here"/checks.d/*.sh; do
+    [ -f "$f" ] || continue
+    echo "run-checks: extra: ${f##*/}"
+    sh "$f" || { echo "run-checks: extra ${f##*/} failed" >&2; return 1; }
+  done
+}
+
 case "${1:-all}" in
   lint) run lint "$LINT_CMD" ;;
   test) run test "$TEST_CMD" ;;
-  all)  run lint "$LINT_CMD" && run test "$TEST_CMD" ;;
+  all)  run lint "$LINT_CMD" && run test "$TEST_CMD" && extra ;;
   *)    echo "usage: run-checks.sh [lint|test|all]" >&2; exit 2 ;;
 esac

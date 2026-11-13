@@ -21,4 +21,5 @@ Layers, because each one covers the weakness of the one before: instructions (AG
 - Node is needed only in CI, for semantic-release. Nothing local needs it.
 - The release flow does not commit a changelog back to `main`, so protected branches keep working. Release notes live in GitHub Releases.
 - The guard in `.claude/hooks/vc-guard.py` is a text guard. It stops lazy and accidental bypass, not code that builds commands at run time. CI is the real gate.
+- Repo-specific gates (README rules, link checks) go in `.githooks/checks.d/*.sh`. `run-checks.sh all` runs each one, so hooks and CI share them.
 - Re-run `plan` any time; a second run reports SKIP for everything that is current.
